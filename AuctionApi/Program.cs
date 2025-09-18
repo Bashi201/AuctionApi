@@ -48,6 +48,9 @@ builder.Services.AddSwaggerGen(c =>
     // c.IncludeXmlComments(xmlPath);
 });
 
+builder.Services.AddScoped<IProductService, ProductService>();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline (your existing middleware here)
