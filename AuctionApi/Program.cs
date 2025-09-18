@@ -48,6 +48,12 @@ builder.Services.AddSwaggerGen(c =>
     // c.IncludeXmlComments(xmlPath);
 });
 
+<<<<<<< Updated upstream
+=======
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+>>>>>>> Stashed changes
 var app = builder.Build();
 
 // Configure the HTTP request pipeline (your existing middleware here)
