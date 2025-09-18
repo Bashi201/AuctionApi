@@ -8,7 +8,8 @@ namespace AuctionApi.Services
     {
         IEnumerable<OrderResponse> GetAll();
         OrderResponse GetById(int id);
-        OrderResponse Create(OrderCreateRequest model, Order Order);
+        OrderResponse Create(OrderCreate model, Order Order);
+        OrderResponse Update(OrderUpdate model);
         void Delete(int id);
     }
 
@@ -49,11 +50,30 @@ namespace AuctionApi.Services
             };
         }
 
-        public OrderResponse Create(OrderCreateRequest model, Order Order)
+        public OrderResponse Create(OrderCreate model, Order Order)
         {
             _context.Order.Add(Order);
             _context.SaveChanges();
 
+            return new OrderResponse
+            {
+                OrderId = Order.OrderId,
+                ShippingAddress = Order.ShippingAddress,
+                Date = Order.Date,
+                ContactNumber = Order.ContactNumber,
+                Users_Id = Order.Users_Id
+            };
+        }
+
+        public OrderResponse Update(OrderUpdate model)
+        {
+            var Order = _context.Order.Find(model.OrderId);
+            if (Order == null) throw new KeyNotFoundException("Order not found");
+            // Update fields
+            Order.ShippingAddress = model.ShippingAddress;
+            Order.ContactNumber = model.ContactNumber;
+            _context.Order.Update(Order);
+            _context.SaveChanges();
             return new OrderResponse
             {
                 OrderId = Order.OrderId,

@@ -2,7 +2,7 @@
 
 namespace AuctionApi.Models.Orders
 {
-    public class OrderCreateRequest
+    public class OrderCreate
     {
         public string ShippingAddress { get; set; }
         public DateTime Date { get; set; }

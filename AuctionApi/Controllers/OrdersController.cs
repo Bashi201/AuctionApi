@@ -1,6 +1,5 @@
 ﻿using AuctionApi.Entities;
 using AuctionApi.Models.Orders;
-using AuctionApi.Models.Products;
 using AuctionApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,7 +34,7 @@ namespace AuctionApi.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromForm] OrderCreateRequest model)
+        public IActionResult Create([FromForm] OrderCreate model)
         {
             // Create a new Order entity from the model
             var orderEntity = new Order
@@ -47,7 +46,21 @@ namespace AuctionApi.Controllers
             };
 
             _OrderService.Create(model, orderEntity);
-            return Ok(new { message = "Registration successful" });
+            return Ok(new { message = "Order Created" });
+        }
+
+        [HttpPost("update")]
+        public IActionResult Update([FromForm] OrderUpdate model)
+        {
+            // Create a new Order entity from the model
+            var orderEntity = new Order
+            {
+                OrderId = model.OrderId,
+                ShippingAddress = model.ShippingAddress,
+                ContactNumber = model.ContactNumber,
+            };
+            _OrderService.Update(model);
+            return Ok(new { message = "Update successful" });
         }
 
         [HttpDelete("{id}")]
