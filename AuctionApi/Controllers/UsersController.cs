@@ -7,6 +7,7 @@ namespace AuctionApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")] // Restrict all endpoints to Admin role
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -19,14 +20,15 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous] // Allow public access for registration
     public IActionResult Register([FromForm] RegisterRequest model)
     {
         _userService.Register(model, _environment.WebRootPath);
         return Ok(new { message = "Registration successful" });
     }
 
-    // NEW: Endpoint for seller registration
     [HttpPost("register-seller")]
+    [AllowAnonymous] // Allow public access for seller registration
     public IActionResult RegisterSeller([FromForm] RegisterRequest model)
     {
         _userService.RegisterSeller(model, _environment.WebRootPath);
@@ -34,17 +36,50 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("authenticate")]
+    [AllowAnonymous] // Allow public access for authentication
     public IActionResult Authenticate(AuthenticateRequest model)
     {
         var response = _userService.Authenticate(model);
         return Ok(response);
     }
 
-    // Example protected endpoint for future dashboard access
-    [Authorize(Roles = "Admin")]
     [HttpGet("dashboard")]
     public IActionResult GetDashboard()
     {
         return Ok(new { message = "Welcome to Admin Dashboard" });
+    }
+
+    // NEW: Get all users
+    [HttpGet]
+    public IActionResult GetAllUsers()
+    {
+        var users = _userService.GetAllUsers();
+        return Ok(users);
+    }
+
+    // NEW: Get user by ID
+    [HttpGet("{id}")]
+    public IActionResult GetUserById(int id)
+    {
+        var user = _userService.GetUserById(id);
+        if (user == null)
+            return NotFound(new { message = "User not found" });
+        return Ok(user);
+    }
+
+    // NEW: Update user
+    [HttpPut("{id}")]
+    public IActionResult UpdateUser(int id, [FromForm] UpdateUserRequest model)
+    {
+        _userService.UpdateUser(id, model, _environment.WebRootPath);
+        return Ok(new { message = "User updated successfully" });
+    }
+
+    // NEW: Delete user
+    [HttpDelete("{id}")]
+    public IActionResult DeleteUser(int id)
+    {
+        _userService.DeleteUser(id);
+        return Ok(new { message = "User deleted successfully" });
     }
 }

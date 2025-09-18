@@ -1,7 +1,6 @@
 ﻿using AuctionApi.Entities;
 using AuctionApi.Models.Users;
 using AutoMapper;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AuctionApi.Helpers;
 
@@ -11,5 +10,6 @@ public class AutoMapperProfile : Profile
     {
         CreateMap<RegisterRequest, User>();
         CreateMap<User, AuthenticateResponse>();
+        CreateMap<UpdateUserRequest, User>().ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null)); // NEW: Map UpdateUserRequest to User
     }
 }
