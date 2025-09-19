@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="AuctionApi\images\auctions\" />
+    <Folder Include="AuctionApi\images\products\" />
     <Folder Include="Uploads\" />
   </ItemGroup>
 
