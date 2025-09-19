@@ -49,7 +49,7 @@ namespace AuctionApi.Controllers
             return Ok(new { message = "Order Created" });
         }
 
-        [HttpPost("update")]
+        [HttpPut("update")]
         public IActionResult Update([FromForm] OrderUpdate model)
         {
             // Create a new Order entity from the model
