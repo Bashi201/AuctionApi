@@ -9,8 +9,8 @@ namespace AuctionApi.Services;
 public interface IUserService
 {
     AuthenticateResponse Authenticate(AuthenticateRequest model);
-    void Register(RegisterRequest model, string rootPath);
-    void RegisterSeller(RegisterRequest model, string rootPath);
+    void Register(SellerRegisterRequest model, string rootPath);
+    void RegisterSeller(SellerRegisterRequest model, string rootPath);
     IEnumerable<User> GetAllUsers(); // NEW
     User GetUserById(int id); // NEW
     void UpdateUser(int id, UpdateUserRequest model, string rootPath); // NEW
@@ -40,7 +40,7 @@ public class UserService : IUserService
         return response;
     }
 
-    public void Register(RegisterRequest model, string rootPath)
+    public void Register(SellerRegisterRequest model, string rootPath)
     {
         if (_context.Users.Any(x => x.Email == model.Email))
             throw new AppException("Email '" + model.Email + "' is already taken");
@@ -65,7 +65,7 @@ public class UserService : IUserService
         _context.SaveChanges();
     }
 
-    public void RegisterSeller(RegisterRequest model, string rootPath)
+    public void RegisterSeller(SellerRegisterRequest model, string rootPath)
     {
         if (_context.Users.Any(x => x.Email == model.Email))
             throw new AppException("Email '" + model.Email + "' is already taken");

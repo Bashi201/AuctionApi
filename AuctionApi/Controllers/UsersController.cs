@@ -21,7 +21,7 @@ public class UsersController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous] // Allow public access for registration
-    public IActionResult Register([FromForm] RegisterRequest model)
+    public IActionResult Register([FromForm] SellerRegisterRequest model)
     {
         _userService.Register(model, _environment.WebRootPath);
         return Ok(new { message = "Registration successful" });
@@ -29,7 +29,7 @@ public class UsersController : ControllerBase
 
     [HttpPost("register-seller")]
     [AllowAnonymous] // Allow public access for seller registration
-    public IActionResult RegisterSeller([FromForm] RegisterRequest model)
+    public IActionResult RegisterSeller([FromForm] SellerRegisterRequest model)
     {
         _userService.RegisterSeller(model, _environment.WebRootPath);
         return Ok(new { message = "Seller registration successful" });

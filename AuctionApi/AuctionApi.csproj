@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="images\profiles\" />
     <Folder Include="Uploads\" />
   </ItemGroup>
 

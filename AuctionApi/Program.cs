@@ -52,6 +52,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ISellerService, SellerService>();
 
 
 
