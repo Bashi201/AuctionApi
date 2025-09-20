@@ -1,96 +1,44 @@
 ﻿using AuctionApi.Entities;
 using AuctionApi.Helpers;
 using AuctionApi.Models.Orders;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 
-namespace AuctionApi.Services
+namespace AuctionApi.Services;
+
+public interface IOrderService
 {
-    public interface IOrderService
+    IEnumerable<Order> GetSellerOrders(int sellerId);
+    void UpdateOrderStatus(int id, int sellerId, string status);
+}
+
+public class OrderService : IOrderService
+{
+    private readonly DataContext _context;
+    private readonly IMapper _mapper;
+
+    public OrderService(DataContext context, IMapper mapper)
     {
-        IEnumerable<OrderResponse> GetAll();
-        OrderResponse GetById(int id);
-        OrderResponse Create(OrderCreate model, Order Order);
-        OrderResponse Update(OrderUpdate model);
-        void Delete(int id);
+        _context = context;
+        _mapper = mapper;
     }
 
-    public class OrderService : IOrderService
+    public IEnumerable<Order> GetSellerOrders(int sellerId)
     {
-        private readonly DataContext _context;
+        return _context.Order
+            .Include(o => o.Product)
+            .Include(o => o.Buyer)
+            .Where(o => o.Product.SellerId == sellerId)
+            .ToList();
+    }
 
-        public OrderService(DataContext context)
-        {
-            _context = context;
-        }
-
-        public IEnumerable<OrderResponse> GetAll()
-        {
-            return _context.Order
-                .Select(p => new OrderResponse
-                {
-                    OrderId = p.OrderId,
-                    ShippingAddress = p.ShippingAddress,
-                    Date = p.Date,
-                    ContactNumber = p.ContactNumber,
-                    Users_Id = p.Users_Id
-                }).ToList();
-        }
-
-        public OrderResponse GetById(int id)
-        {
-            var Order = _context.Order.Find(id);
-            if (Order == null) return null;
-
-            return new OrderResponse
-            {
-                OrderId = Order.OrderId,
-                ShippingAddress = Order.ShippingAddress,
-                Date = Order.Date,
-                ContactNumber = Order.ContactNumber,
-                Users_Id = Order.Users_Id
-            };
-        }
-
-        public OrderResponse Create(OrderCreate model, Order Order)
-        {
-            _context.Order.Add(Order);
-            _context.SaveChanges();
-
-            return new OrderResponse
-            {
-                OrderId = Order.OrderId,
-                ShippingAddress = Order.ShippingAddress,
-                Date = Order.Date,
-                ContactNumber = Order.ContactNumber,
-                Users_Id = Order.Users_Id
-            };
-        }
-
-        public OrderResponse Update(OrderUpdate model)
-        {
-            var Order = _context.Order.Find(model.OrderId);
-            if (Order == null) throw new KeyNotFoundException("Order not found");
-            // Update fields
-            Order.ShippingAddress = model.ShippingAddress;
-            Order.ContactNumber = model.ContactNumber;
-            _context.Order.Update(Order);
-            _context.SaveChanges();
-            return new OrderResponse
-            {
-                OrderId = Order.OrderId,
-                ShippingAddress = Order.ShippingAddress,
-                Date = Order.Date,
-                ContactNumber = Order.ContactNumber,
-                Users_Id = Order.Users_Id
-            };
-        }
-
-        public void Delete(int id)
-        {
-            var Order = _context.Order.Find(id);
-            if (Order == null) throw new KeyNotFoundException("Order not found");
-
-            _context.Order.Remove(Order);
-            _context.SaveChanges();
-        }
+    public void UpdateOrderStatus(int id, int sellerId, string status)
+    {
+        var order = _context.Order
+            .Include(o => o.Product)
+            .FirstOrDefault(o => o.Id == id && o.Product.SellerId == sellerId);
+        if (order == null) throw new AppException("Order not found or unauthorized");
+        order.Status = status;
+        _context.SaveChanges();
     }
 }
