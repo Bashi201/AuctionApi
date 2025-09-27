@@ -15,6 +15,7 @@ public interface IUserService
     User GetUserById(int id); // NEW
     void UpdateUser(int id, UpdateUserRequest model, string rootPath); // NEW
     void DeleteUser(int id); // NEW
+    void RegisterBuyer(RegisterRequest model, string webRootPath);
 }
 
 public class UserService : IUserService
@@ -75,6 +76,31 @@ public class UserService : IUserService
 
         var user = _mapper.Map<User>(model);
         user.Role = "Seller";
+
+        if (model.ProfilePicture != null)
+        {
+            var uniqueFileName = GetUniqueFileName(model.ProfilePicture.FileName);
+            var uploadsFolder = Path.Combine(rootPath, "images", "profiles");
+            Directory.CreateDirectory(uploadsFolder);
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            model.ProfilePicture.CopyTo(new FileStream(filePath, FileMode.Create));
+            user.ProfilePicture = "/images/profiles/" + uniqueFileName;
+        }
+
+        _context.Users.Add(user);
+        _context.SaveChanges();
+    }
+
+    public void RegisterBuyer(RegisterRequest model, string rootPath)
+    {
+        if (_context.Users.Any(x => x.Email == model.Email))
+            throw new AppException("Email '" + model.Email + "' is already taken");
+
+        if (model.Password != model.ConfirmPassword)
+            throw new AppException("Passwords do not match");
+
+        var user = _mapper.Map<User>(model);
+        user.Role = "Buyer";
 
         if (model.ProfilePicture != null)
         {

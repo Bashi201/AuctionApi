@@ -35,6 +35,14 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Seller registration successful" });
     }
 
+    [HttpPost("register-buyer")]
+    [AllowAnonymous] // Allow public access for buyer registration
+    public IActionResult RegisterBuyer([FromForm] RegisterRequest model)
+    {
+        _userService.RegisterBuyer(model, _environment.WebRootPath);
+        return Ok(new { message = "Buyer registration successful" });
+    }
+
     [HttpPost("authenticate")]
     [AllowAnonymous] // Allow public access for authentication
     public IActionResult Authenticate(AuthenticateRequest model)
