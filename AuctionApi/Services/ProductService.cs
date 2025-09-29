@@ -11,7 +11,9 @@ public interface IProductService
     void CreateProduct(CreateProductRequest model, int sellerId, string rootPath);
     IEnumerable<Product> GetSellerProducts(int sellerId);
     void DeleteProduct(int id, int sellerId);
+
     void UpdateProduct(int id, UpdateProductResponse model, int sellerId, string rootPath);
+
     IEnumerable<Product> GetAllProducts();
 }
 
@@ -72,6 +74,7 @@ public class ProductService : IProductService
             + "_" + Guid.NewGuid().ToString()[..4]
             + Path.GetExtension(fileName);
     }
+
     public void UpdateProduct(int id, UpdateProductResponse model, int sellerId, string rootPath)
     {
         var product = _context.Products
@@ -110,9 +113,6 @@ public class ProductService : IProductService
         _context.Products.Update(product);
         _context.SaveChanges();
     }
-    //get all
-
-
 
     public IEnumerable<Product> GetAllProducts()
     {

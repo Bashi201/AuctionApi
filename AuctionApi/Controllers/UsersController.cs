@@ -14,12 +14,13 @@ public class UsersController : ControllerBase
     private readonly IWebHostEnvironment _environment;
     private readonly IOrderService _orderService;
     private readonly IProductService _productService;
-    
 
     public UsersController(IUserService userService, IWebHostEnvironment environment, IOrderService orderService, IProductService productService)
     {
         _userService = userService;
         _environment = environment;
+        _orderService = orderService;
+        _productService = productService;
     }
 
     [HttpPost("register")]
@@ -93,6 +94,7 @@ public class UsersController : ControllerBase
         _userService.DeleteUser(id);
         return Ok(new { message = "User deleted successfully" });
     }
+
     //shoing order and product
     // Order Management: View all orders for seller's products
     [HttpGet("orders")]
