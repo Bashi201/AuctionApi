@@ -12,8 +12,11 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IWebHostEnvironment _environment;
+    private readonly IOrderService _orderService;
+    private readonly IProductService _productService;
+    
 
-    public UsersController(IUserService userService, IWebHostEnvironment environment)
+    public UsersController(IUserService userService, IWebHostEnvironment environment, IOrderService orderService, IProductService productService)
     {
         _userService = userService;
         _environment = environment;
@@ -89,5 +92,24 @@ public class UsersController : ControllerBase
     {
         _userService.DeleteUser(id);
         return Ok(new { message = "User deleted successfully" });
+    }
+    //shoing order and product
+    // Order Management: View all orders for seller's products
+    [HttpGet("orders")]
+    public IActionResult GetSellerOrders()
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var orders = _orderService.GetSellerOrders(sellerId);
+        return Ok(orders);
+    }
+
+
+
+    // Product Management: View all products created by the seller
+    [HttpGet("products")]
+    public IActionResult GetAllProducts()
+    {
+        var products = _productService.GetAllProducts();  // assign to 'products'
+        return Ok(products);
     }
 }
