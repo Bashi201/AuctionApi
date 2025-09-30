@@ -11,6 +11,7 @@ public interface IProductService
     void CreateProduct(CreateProductRequest model, int sellerId, string rootPath);
     IEnumerable<Product> GetSellerProducts(int sellerId);
     void DeleteProduct(int id, int sellerId);
+    void UpdateProduct(int id, UpdateProductRequest model, int sellerId, string rootPath);
 }
 
 public class ProductService : IProductService
@@ -60,6 +61,40 @@ public class ProductService : IProductService
         var product = _context.Products.FirstOrDefault(p => p.Id == id && p.SellerId == sellerId);
         if (product == null) throw new AppException("Product not found or unauthorized");
         _context.Products.Remove(product);
+        _context.SaveChanges();
+    }
+
+    public void UpdateProduct(int id, UpdateProductRequest model, int sellerId, string rootPath)
+    {
+        var product = _context.Products.FirstOrDefault(p => p.Id == id && p.SellerId == sellerId);
+        if (product == null) throw new AppException("Product not found or unauthorized");
+
+        // Update fields if provided
+        if (!string.IsNullOrEmpty(model.Name)) product.Name = model.Name;
+        if (!string.IsNullOrEmpty(model.Description)) product.Description = model.Description;
+        if (model.Price.HasValue) product.Price = model.Price.Value;
+        if (!string.IsNullOrEmpty(model.Status)) product.Status = model.Status;
+
+        // Handle image updates (replace all images if new ones are provided)
+        var newImages = new List<IFormFile> { model.Image1, model.Image2, model.Image3, model.Image4 };
+        if (newImages.Any(img => img != null))
+        {
+            product.Images.Clear(); // Clear existing images
+            foreach (var image in newImages)
+            {
+                if (image != null)
+                {
+                    var uniqueFileName = GetUniqueFileName(image.FileName);
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "Images", "products");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    image.CopyTo(new FileStream(filePath, FileMode.Create));
+                    product.Images.Add("/AuctionApi/Images/products/" + uniqueFileName);
+                }
+            }
+        }
+
+        _context.Products.Update(product);
         _context.SaveChanges();
     }
 
