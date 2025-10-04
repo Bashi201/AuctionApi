@@ -160,12 +160,5 @@ public class SellersController : ControllerBase
         _userService.UpdateUser(sellerId, model, _environment.WebRootPath);
         return Ok(new { message = "Account updated successfully" });
     }
-    // Product Management: Update a product
-    [HttpPut("products/{id}")]
-    public IActionResult UpdateProduct(int id, [FromForm] UpdateProductResponse model)
-    {
-        var sellerId = int.Parse(User.FindFirst("id")?.Value);
-        _productService.UpdateProduct(id, model, sellerId, _environment.WebRootPath);
-        return Ok(new { message = "Product updated successfully" });
-    }
+   
 }

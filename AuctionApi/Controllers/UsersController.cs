@@ -107,11 +107,28 @@ public class UsersController : ControllerBase
 
 
 
+
+
     // Product Management: View all products created by the seller
     [HttpGet("products")]
     public IActionResult GetAllProducts()
     {
         var products = _productService.GetAllProducts();  // assign to 'products'
         return Ok(products);
+    }
+
+
+    [HttpPut("{id}/approve")]
+    public IActionResult ApproveProduct(int id)
+    {
+        try
+        {
+            var product = _productService.ApproveProduct(id);
+            return Ok(product);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
