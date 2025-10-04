@@ -8,5 +8,6 @@ public class Product
     public decimal Price { get; set; }
     public int SellerId { get; set; }
     public User Seller { get; set; }
-    public List<string> Images  { get; set; } = new List<string>();
+    public List<string> Images { get; set; } = new List<string>();
+    public string Status { get; set; } = "Pending"; // Added Status with default value
 }

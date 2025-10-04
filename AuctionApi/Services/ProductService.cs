@@ -12,9 +12,17 @@ public interface IProductService
     IEnumerable<Product> GetSellerProducts(int sellerId);
     void DeleteProduct(int id, int sellerId);
 
-    void UpdateProduct(int id, UpdateProductResponse model, int sellerId, string rootPath);
+
+
 
     IEnumerable<Product> GetAllProducts();
+
+    void UpdateProduct(int id, UpdateProductRequest model, int sellerId, string rootPath);
+
+    
+    Product ApproveProduct(int productId);
+
+
 }
 
 public class ProductService : IProductService
@@ -67,34 +75,23 @@ public class ProductService : IProductService
         _context.SaveChanges();
     }
 
-    private string GetUniqueFileName(string fileName)
+    public void UpdateProduct(int id, UpdateProductRequest model, int sellerId, string rootPath)
     {
-        fileName = Path.GetFileName(fileName);
-        return Path.GetFileNameWithoutExtension(fileName)
-            + "_" + Guid.NewGuid().ToString()[..4]
-            + Path.GetExtension(fileName);
-    }
+        var product = _context.Products.FirstOrDefault(p => p.Id == id && p.SellerId == sellerId);
+        if (product == null) throw new AppException("Product not found or unauthorized");
 
-    public void UpdateProduct(int id, UpdateProductResponse model, int sellerId, string rootPath)
-    {
-        var product = _context.Products
-            .FirstOrDefault(p => p.Id == id && p.SellerId == sellerId);
+        // Update fields if provided
+        if (!string.IsNullOrEmpty(model.Name)) product.Name = model.Name;
+        if (!string.IsNullOrEmpty(model.Description)) product.Description = model.Description;
+        if (model.Price.HasValue) product.Price = model.Price.Value;
+        if (!string.IsNullOrEmpty(model.Status)) product.Status = model.Status;
 
-        if (product == null)
-            throw new AppException("Product not found or unauthorized");
-
-        // Update scalar fields
-        product.Name = model.Name ?? product.Name;
-        product.Description = model.Description ?? product.Description;
-        product.Price = model.Price != 0 ? model.Price : product.Price;
-
-        // Handle images (replace old if new ones are uploaded)
-         var images = new List<IFormFile> { model.Image1, model.Image2, model.Image3, model.Image4 };
-        if (images.Any(i => i != null))
+        // Handle image updates (replace all images if new ones are provided)
+        var newImages = new List<IFormFile> { model.Image1, model.Image2, model.Image3, model.Image4 };
+        if (newImages.Any(img => img != null))
         {
-            product.Images.Clear(); // remove old images
-
-            foreach (var image in images)
+            product.Images.Clear(); // Clear existing images
+            foreach (var image in newImages)
             {
                 if (image != null)
                 {
@@ -102,9 +99,7 @@ public class ProductService : IProductService
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "Images", "products");
                     Directory.CreateDirectory(uploadsFolder);
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    image.CopyTo(stream);
-
+                    image.CopyTo(new FileStream(filePath, FileMode.Create));
                     product.Images.Add("/AuctionApi/Images/products/" + uniqueFileName);
                 }
             }
@@ -114,11 +109,43 @@ public class ProductService : IProductService
         _context.SaveChanges();
     }
 
+    private string GetUniqueFileName(string fileName)
+    {
+        fileName = Path.GetFileName(fileName);
+        return Path.GetFileNameWithoutExtension(fileName)
+            + "_" + Guid.NewGuid().ToString()[..4]
+            + Path.GetExtension(fileName);
+    }
+
+
+    //get all
+
+
+
     public IEnumerable<Product> GetAllProducts()
     {
         return _context.Products
-    .Include(p => p.Seller) // include seller info too
+    //.Include(p => p.user) // include seller info too
     .ToList();
 
+
+
     }
+
+
+    //aprove produts
+
+    public Product ApproveProduct(int productId)
+    {
+        var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+
+        if (product == null)
+            throw new Exception("Product not found");
+
+        product.Status = "Posted";   // Change Pending → Approved
+        _context.SaveChanges();
+
+        return product;
+    }
+
 }

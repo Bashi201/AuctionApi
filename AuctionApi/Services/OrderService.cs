@@ -25,7 +25,7 @@ public class OrderService : IOrderService
 
     public IEnumerable<Order> GetSellerOrders(int sellerId)
     {
-        return _context.Order
+        return _context.Orders
             .Include(o => o.Product)
             .Include(o => o.Buyer)
             .Where(o => o.Product.SellerId == sellerId)
@@ -34,7 +34,7 @@ public class OrderService : IOrderService
 
     public void UpdateOrderStatus(int id, int sellerId, string status)
     {
-        var order = _context.Order
+        var order = _context.Orders
             .Include(o => o.Product)
             .FirstOrDefault(o => o.Id == id && o.Product.SellerId == sellerId);
         if (order == null) throw new AppException("Order not found or unauthorized");

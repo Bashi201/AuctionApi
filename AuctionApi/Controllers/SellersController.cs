@@ -98,6 +98,15 @@ public class SellersController : ControllerBase
         return Ok(new { message = "Product created successfully" });
     }
 
+    // Product Management: Update a product
+    [HttpPut("products/{id}")]
+    public IActionResult UpdateProduct(int id, [FromForm] UpdateProductRequest model)
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _productService.UpdateProduct(id, model, sellerId, _environment.WebRootPath);
+        return Ok(new { message = "Product updated successfully" });
+    }
+
     // Product Management: View all products created by the seller
     [HttpGet("products")]
     public IActionResult GetSellerProducts()
@@ -132,6 +141,15 @@ public class SellersController : ControllerBase
         var sellerId = int.Parse(User.FindFirst("id")?.Value);
         _orderService.UpdateOrderStatus(id, sellerId, model.Status);
         return Ok(new { message = "Order status updated successfully" });
+    }
+
+    // Account Management: Get seller account details
+    [HttpGet("account")]
+    public IActionResult GetAccount()
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var user = _userService.GetUserById(sellerId);
+        return Ok(user);
     }
 
     // Account Management: Update seller account details

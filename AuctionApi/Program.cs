@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.FileProviders;
 
 // ... (other using statements remain the same)
 
@@ -87,6 +88,15 @@ var app = builder.Build();
 // Configure the HTTP request pipeline
 app.UseCors();
 app.UseStaticFiles(); // Serve images from wwwroot
+
+// Add this to serve images from the custom folder
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "Images")),
+    RequestPath = "/AuctionApi/Images"
+});
+
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
