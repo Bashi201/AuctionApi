@@ -10,6 +10,7 @@ public interface IAuctionService
 {
     void CreateAuction(CreateAuctionRequest model, int sellerId, string rootPath);
     void UpdateAuction(int id, UpdateAuctionRequest model, int sellerId, string rootPath); // New
+    IEnumerable<Auction> GetAllAuctions();
     IEnumerable<Auction> GetSellerAuctions(int sellerId);
     Auction GetAuctionById(int id, int sellerId);
     void DeleteAuction(int id, int sellerId);
@@ -99,7 +100,15 @@ public class AuctionService : IAuctionService
             .Where(a => a.SellerId == sellerId)
             .ToList();
     }
-
+    public IEnumerable<Auction> GetAllAuctions()
+    {
+        return _context.Auctions
+            .Include(a => a.Seller)
+            .Include(a => a.Bids)
+            .ThenInclude(b => b.Bidder)
+            .Include(a => a.Winner)
+            .ToList();
+    }
     public Auction GetAuctionById(int id, int sellerId)
     {
         var auction = _context.Auctions
