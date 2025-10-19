@@ -1,15 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿// Updated CreateProductRequest.cs
+using Microsoft.AspNetCore.Http;
 
 namespace AuctionApi.Models.Products;
 
 public class CreateProductRequest
 {
-    public string Name { get; set; }
-    public string Description { get; set; }
+    public string? Name { get; set; } // Made nullable
+    public string? Description { get; set; } // Made nullable
     public decimal Price { get; set; }
-    public string Status { get; set; } = "Pending"; // Added Status
-    public IFormFile Image1 { get; set; }
-    public IFormFile Image2 { get; set; }
-    public IFormFile Image3 { get; set; }
-    public IFormFile Image4 { get; set; }
+    public string? Status { get; set; } = "Pending"; // Made nullable but with default
+    public IFormFile? Image1 { get; set; } // Made nullable
+    public IFormFile? Image2 { get; set; } // Made nullable
+    public IFormFile? Image3 { get; set; } // Made nullable
+    public IFormFile? Image4 { get; set; } // Made nullable
 }
