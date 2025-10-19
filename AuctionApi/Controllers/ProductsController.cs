@@ -2,6 +2,7 @@
 using AuctionApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace AuctionApi.Controllers;
 
@@ -46,5 +47,25 @@ public class ProductsController : ControllerBase
     {
         _productService.DeleteProductAdmin(id);
         return Ok(new { message = "Product deleted successfully" });
+    }
+
+    // New public endpoint for posted products (assuming Product has Status property)
+    [AllowAnonymous]
+    [HttpGet("posted")]
+    public IActionResult GetPostedProducts()
+    {
+        var postedProducts = _productService.GetAllProducts()
+            .Where(p => string.Equals(p.Status, "posted", StringComparison.OrdinalIgnoreCase))
+            .Select(p => new
+            {
+                id = p.Id,
+                title = p.Name, // Map to 'title' to match frontend usage
+                price = p.Price,
+                image = p.Images, // Use directly as src, assuming "/AuctionApi/..." path
+                category = "General" // Default category since no column in DB
+            })
+            .ToList();
+
+        return Ok(postedProducts);
     }
 }
