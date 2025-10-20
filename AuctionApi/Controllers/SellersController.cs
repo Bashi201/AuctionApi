@@ -1,4 +1,7 @@
-﻿using AuctionApi.Models.Sellers;
+using AuctionApi.Helpers;
+using AuctionApi.Models.Auctions;
+using AuctionApi.Models.Orders;
+using AuctionApi.Models.Products;
 using AuctionApi.Models.Users;
 using AuctionApi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -8,83 +11,169 @@ namespace AuctionApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Seller")] // Restrict all endpoints to Seller role
+[Authorize(Roles = "Seller")]
 public class SellersController : ControllerBase
 {
-    private readonly ISellerService _sellerService;
+    private readonly IUserService _userService;
+    private readonly IAuctionService _auctionService;
+    private readonly IProductService _productService;
+    private readonly IOrderService _orderService;
     private readonly IWebHostEnvironment _environment;
 
-    public SellersController(ISellerService sellerService, IWebHostEnvironment environment)
+    public SellersController(
+        IUserService userService,
+        IAuctionService auctionService,
+        IProductService productService,
+        IOrderService orderService,
+        IWebHostEnvironment environment)
     {
-        _sellerService = sellerService;
+        _userService = userService;
+        _auctionService = auctionService;
+        _productService = productService;
+        _orderService = orderService;
         _environment = environment;
     }
 
-    // Register as Admin
-    [HttpPost("register")]
-    [AllowAnonymous]
-    public IActionResult Register([FromForm] SellerRegisterRequestAsSeller model)
+    // Auction Management: Create a new auction
+    [HttpPost("auctions")]
+    public IActionResult CreateAuction([FromForm] CreateAuctionRequest model)
     {
-        _sellerService.RegisterSeller(model, _environment.ContentRootPath);
-        return Ok(new { message = "Registration successful" });
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _auctionService.CreateAuction(model, sellerId, _environment.WebRootPath);
+        return Ok(new { message = "Auction created successfully" });
     }
 
-    // Register as Seller
-    [HttpPost("register-seller")]
-    [AllowAnonymous]
-    public IActionResult RegisterSeller([FromForm] SellerRegisterRequestAsSeller model)
+    // Auction Management: View all auctions created by the seller
+    [HttpGet("auctions")]
+    public IActionResult GetSellerAuctions()
     {
-        _sellerService.RegisterSeller(model, _environment.ContentRootPath);
-        return Ok(new { message = "Seller registration successful" });
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var auctions = _auctionService.GetSellerAuctions(sellerId);
+        return Ok(auctions);
     }
 
-    // Authenticate/Login
-    [HttpPost("authenticate")]
-    [AllowAnonymous]
-    public IActionResult Authenticate([FromBody] AuthenticateRequest model)
+    // Auction Management: View specific auction details (including bidders and winner)
+    [HttpGet("auctions/{id}")]
+    public IActionResult GetAuctionById(int id)
     {
-        var response = _sellerService.Authenticate(model); // Ensure this method exists in SellerService
-        return Ok(response);
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var auction = _auctionService.GetAuctionById(id, sellerId);
+        if (auction == null)
+            return NotFound(new { message = "Auction not found or unauthorized" });
+        return Ok(auction);
     }
 
-    // Seller Dashboard
-    [HttpGet("dashboard")]
-    public IActionResult GetDashboard()
+    // Auction Management: Delete an auction
+    [HttpDelete("auctions/{id}")]
+    public IActionResult DeleteAuction(int id)
     {
-        return Ok(new { message = "Welcome to Seller Dashboard" });
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _auctionService.DeleteAuction(id, sellerId);
+        return Ok(new { message = "Auction deleted successfully" });
     }
 
-    // Get all sellers
-    [HttpGet]
-    public IActionResult GetAllSellers()
+    // Auction Management: Extend auction time
+    [HttpPut("auctions/{id}/extend")]
+    public IActionResult ExtendAuctionTime(int id, [FromBody] ExtendAuctionTimeRequest model)
     {
-        var sellers = _sellerService.GetAllSeller();
-        return Ok(sellers);
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _auctionService.ExtendAuctionTime(id, sellerId, model.AdditionalHours);
+        return Ok(new { message = "Auction time extended successfully" });
     }
 
-    // Get seller by ID
-    [HttpGet("{id}")]
-    public IActionResult GetSellerById(int id)
+    [HttpPut("auctions/{id}")]
+    public IActionResult UpdateAuction(int id, [FromForm] UpdateAuctionRequest model)
     {
-        var seller = _sellerService.GetSellerById(id);
-        if (seller == null)
-            return NotFound(new { message = "Seller not found" });
-        return Ok(seller);
+        try
+        {
+            var sellerId = int.Parse(User.FindFirst("id")?.Value);
+            _auctionService.UpdateAuction(id, model, sellerId, _environment.WebRootPath);
+            return Ok(new { message = "Auction updated successfully" });
+        }
+        catch (AppException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    // Update seller
-    [HttpPut("{id}")]
-    public IActionResult UpdateSeller(int id, [FromForm] UpdateSellerRequest model)
+    // Auction Management: Stop auction
+    [HttpPut("auctions/{id}/stop")]
+    public IActionResult StopAuction(int id)
     {
-        _sellerService.UpdateSeller(id, model, _environment.ContentRootPath);
-        return Ok(new { message = "Seller updated successfully" });
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _auctionService.StopAuction(id, sellerId);
+        return Ok(new { message = "Auction stopped successfully" });
     }
 
-    // Delete seller
-    [HttpDelete("{id}")]
-    public IActionResult DeleteSeller(int id)
+    // Product Management: Create a new product
+    [HttpPost("products")]
+    public IActionResult CreateProduct([FromForm] CreateProductRequest model)
     {
-        _sellerService.DeleteSeller(id);
-        return Ok(new { message = "Seller deleted successfully" });
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _productService.CreateProduct(model, sellerId, _environment.WebRootPath);
+        return Ok(new { message = "Product created successfully" });
+    }
+
+    // Product Management: Update a product
+    [HttpPut("products/{id}")]
+    public IActionResult UpdateProduct(int id, [FromForm] UpdateProductRequest model)
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _productService.UpdateProduct(id, model, sellerId, _environment.WebRootPath);
+        return Ok(new { message = "Product updated successfully" });
+    }
+
+    // Product Management: View all products created by the seller
+    [HttpGet("products")]
+    public IActionResult GetSellerProducts()
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var products = _productService.GetSellerProducts(sellerId);
+        return Ok(products);
+    }
+
+    // Product Management: Delete a product
+    [HttpDelete("products/{id}")]
+    public IActionResult DeleteProduct(int id)
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _productService.DeleteProduct(id, sellerId);
+        return Ok(new { message = "Product deleted successfully" });
+    }
+
+    // Order Management: View all orders for seller's products
+    [HttpGet("orders")]
+    public IActionResult GetSellerOrders()
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var orders = _orderService.GetSellerOrders(sellerId);
+        return Ok(orders);
+    }
+
+    // Order Management: Update order delivery status
+    [HttpPut("orders/{id}/status")]
+    public IActionResult UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest model)
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _orderService.UpdateOrderStatus(id, sellerId, model.Status);
+        return Ok(new { message = "Order status updated successfully" });
+    }
+
+    // Account Management: Get seller account details
+    [HttpGet("account")]
+    public IActionResult GetAccount()
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        var user = _userService.GetUserById(sellerId);
+        return Ok(user);
+    }
+
+    // Account Management: Update seller account details
+    [HttpPut("account")]
+    public IActionResult UpdateAccount([FromForm] UpdateUserRequest model)
+    {
+        var sellerId = int.Parse(User.FindFirst("id")?.Value);
+        _userService.UpdateUser(sellerId, model, _environment.WebRootPath);
+        return Ok(new { message = "Account updated successfully" });
     }
 }
