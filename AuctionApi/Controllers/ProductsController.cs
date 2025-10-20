@@ -28,6 +28,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public IActionResult GetById(int id)
     {
         var product = _productService.GetProductById(id);
