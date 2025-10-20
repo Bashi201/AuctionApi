@@ -1,4 +1,4 @@
-using AuctionApi.Helpers;
+﻿using AuctionApi.Helpers;
 using AuctionApi.Models.Auctions;
 using AuctionApi.Models.Orders;
 using AuctionApi.Models.Products;

@@ -1,11 +1,13 @@
-﻿namespace AuctionApi.Entities
+﻿namespace AuctionApi.Entities;
+
+public class Order
 {
-    public class Order
-    {
-        public int OrderId { get; set; }      // Primary Key
-        public string ShippingAddress { get; set; }
-        public DateTime Date { get; set; }
-        public string ContactNumber { get; set; }
-        public int Users_Id { get; set; }     // Reference to User
-    }
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public Product Product { get; set; }
+    public int BuyerId { get; set; }
+    public User Buyer { get; set; }
+    public string ShippingAddress { get; set; }
+    public string Status { get; set; } // e.g., "Pending", "Shipped", "Delivered"
+    public DateTime OrderDate { get; set; }
 }

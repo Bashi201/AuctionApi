@@ -1,76 +1,72 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AuctionApi.Models.Products;
 using AuctionApi.Services;
-using AuctionApi.Entities;
-using AuctionApi.Models.Products;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 
-namespace AuctionApi.Controllers
+namespace AuctionApi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
+public class ProductsController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class ProductsController : ControllerBase
+    private readonly IProductService _productService;
+    private readonly IWebHostEnvironment _environment;
+
+    public ProductsController(IProductService productService, IWebHostEnvironment environment)
     {
-        private readonly IProductService _productService;
-        private readonly IWebHostEnvironment _environment;
+        _productService = productService;
+        _environment = environment;
+    }
 
-        public ProductsController(IProductService productService, IWebHostEnvironment environment)
-        {
-            _productService = productService;
-            _environment = environment;
-        }
+    [HttpGet]
+    public IActionResult GetAll()
+    {
+        var products = _productService.GetAllProducts();
+        return Ok(products);
+    }
 
-        [HttpGet]
-        public IActionResult GetAll()
-        {
-            var products = _productService.GetAll();
-            return Ok(products);
-        }
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public IActionResult GetById(int id)
+    {
+        var product = _productService.GetProductById(id);
+        if (product == null) return NotFound(new { message = "Product not found" });
+        return Ok(product);
+    }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById(int id)
-        {
-            var product = _productService.GetById(id);
-            if (product == null) return NotFound();
-            return Ok(product);
-        }
+    [HttpPut("{id}")]
+    public IActionResult Update(int id, [FromForm] UpdateProductRequest model)
+    {
+        _productService.UpdateProductAdmin(id, model, _environment.WebRootPath);
+        return Ok(new { message = "Product updated successfully" });
+    }
 
-        [HttpPost]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Create([FromForm] ProductUploadRequest model)
-        {
-            string filePath = null;
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        _productService.DeleteProductAdmin(id);
+        return Ok(new { message = "Product deleted successfully" });
+    }
 
-            if (model.Photo != null)
+    // New public endpoint for posted products (assuming Product has Status property)
+    [AllowAnonymous]
+    [HttpGet("posted")]
+    public IActionResult GetPostedProducts()
+    {
+        var postedProducts = _productService.GetAllProducts()
+            .Where(p => string.Equals(p.Status, "posted", StringComparison.OrdinalIgnoreCase))
+            .Select(p => new
             {
-                string uploadFolder = Path.Combine(_environment.ContentRootPath, "Uploads");
-                if (!Directory.Exists(uploadFolder))
-                    Directory.CreateDirectory(uploadFolder);
+                id = p.Id,
+                title = p.Name, // Map to 'title' to match frontend usage
+                price = p.Price,
+                image = p.Images, // Use directly as src, assuming "/AuctionApi/..." path
+                category = "General" // Default category since no column in DB
+            })
+            .ToList();
 
-                filePath = Path.Combine(uploadFolder, model.Photo.FileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.Photo.CopyToAsync(stream);
-                }
-            }
-
-            var product = new Product
-            {
-                Name = model.Name,
-                LoginUserId = model.LoginUserId,
-                Price = model.Price,
-                Description = model.Description,
-                Photo = filePath != null ? $"Uploads/{model.Photo.FileName}" : null
-            };
-
-            var response = _productService.Create(product);
-            return Ok(response);
-        }
-
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            _productService.Delete(id);
-            return Ok(new { message = "Product deleted successfully" });
-        }
+        return Ok(postedProducts);
     }
 }
