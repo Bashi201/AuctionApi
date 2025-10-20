@@ -1,8 +1,9 @@
-﻿// Updated AutoMapperProfile.cs (adjust mappings to handle nulls)
+// Updated AutoMapperProfile.cs (adjust mappings to handle nulls)
 using AuctionApi.Entities;
 using AuctionApi.Models.Auctions;
 using AuctionApi.Models.Products;
 using AuctionApi.Models.Users;
+using AuctionApi.Models.Bids;
 using AutoMapper;
 
 namespace AuctionApi.Helpers;
@@ -21,5 +22,10 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description ?? string.Empty))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status ?? "Pending"));
         // Note: Images and other fields are handled manually in service
+        CreateMap<CreateBidRequest, Bid>()
+            .ForMember(dest => dest.AuctionId, opt => opt.Ignore())
+            .ForMember(dest => dest.BidderId, opt => opt.Ignore())
+            .ForMember(dest => dest.Bidder, opt => opt.Ignore())
+            .ForMember(dest => dest.BidTime, opt => opt.Ignore());
     }
 }
