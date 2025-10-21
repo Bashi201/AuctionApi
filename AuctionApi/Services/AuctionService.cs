@@ -1,6 +1,7 @@
-﻿using AuctionApi.Entities;
+using AuctionApi.Entities;
 using AuctionApi.Helpers;
 using AuctionApi.Models.Auctions;
+using AuctionApi.Models.Products;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,10 @@ public interface IAuctionService
     void DeleteAuction(int id, int sellerId);
     void ExtendAuctionTime(int id, int sellerId, int additionalHours);
     void StopAuction(int id, int sellerId);
+
+    Auction GetAuctionByIdAdmin(int id);
+    void UpdateAuctionAdmin(int id, UpdateAuctionRequest model, string rootPath);
+    void DeleteAuctionAdmin(int id);
 }
 
 public class AuctionService : IAuctionService
@@ -29,12 +34,14 @@ public class AuctionService : IAuctionService
         _mapper = mapper;
     }
 
+
+
     public void CreateAuction(CreateAuctionRequest model, int sellerId, string rootPath)
     {
         var auction = _mapper.Map<Auction>(model);
         auction.SellerId = sellerId;
         auction.StartTime = DateTime.UtcNow;
-        auction.Status = "Active";
+        auction.Status = "Pending";
 
         var customBasePath = Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "images", "auctions");
         var uploadsFolder = customBasePath;
@@ -121,6 +128,17 @@ public class AuctionService : IAuctionService
         return auction;
     }
 
+    public Auction GetAuctionByIdAdmin(int id)
+    {
+        var auction = _context.Auctions
+            .Include(a => a.Seller)
+            .Include(a => a.Bids)
+            .ThenInclude(b => b.Bidder)
+            .Include(a => a.Winner)
+            .FirstOrDefault(a => a.Id == id);
+        if (auction == null) throw new AppException("Auction not found or unauthorized");
+        return auction;
+    }
     public void DeleteAuction(int id, int sellerId)
     {
         var auction = _context.Auctions.FirstOrDefault(a => a.Id == id && a.SellerId == sellerId);
@@ -153,5 +171,51 @@ public class AuctionService : IAuctionService
         return Path.GetFileNameWithoutExtension(fileName)
             + "_" + Guid.NewGuid().ToString()[..4]
             + Path.GetExtension(fileName);
+    }
+
+
+
+    public void DeleteAuctionAdmin(int id)
+    {
+        var auction = GetAuctionByIdAdmin(id);
+        if (auction == null) throw new AppException("Auction not found");
+        _context.Auctions.Remove(auction);
+        _context.SaveChanges();
+    }
+
+    public void UpdateAuctionAdmin(int id, UpdateAuctionRequest model, string rootPath)
+    {
+        var auction = GetAuctionByIdAdmin(id);
+        if (auction == null) throw new AppException("auction not found");
+
+        if (!string.IsNullOrEmpty(model.Title)) auction.Title = model.Title;
+        if (!string.IsNullOrEmpty(model.Description)) auction.Description = model.Description;
+        if (!model.StartingPrice.Equals(0)) auction.StartingPrice = model.StartingPrice;
+        if (!string.IsNullOrEmpty(model.Status)) auction.Status = model.Status;
+        if (!model.EndTime.Equals(null)) auction.EndTime = model.EndTime;
+
+        var newImages = new List<IFormFile> { model.Image1, model.Image2, model.Image3, model.Image4 };
+        if (newImages.Any(img => img != null))
+        {
+            auction.Images.Clear();
+            foreach (var image in newImages)
+            {
+                if (image != null)
+                {
+                    var uniqueFileName = GetUniqueFileName(image.FileName);
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "Images", "auctions");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        image.CopyTo(stream);
+                    }
+                    auction.Images.Add("/AuctionApi/Images/auctions/" + uniqueFileName);
+                }
+            }
+        }
+
+        _context.Auctions.Update(auction);
+        _context.SaveChanges();
     }
 }
