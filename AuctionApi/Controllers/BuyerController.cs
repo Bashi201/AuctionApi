@@ -44,8 +44,9 @@ public class BuyerController : ControllerBase
     [HttpGet("auctions/")]
     public IActionResult GetAllAtuctions()
     {
-        var auctions = _auctionService.GetAllAuctions();
-        return Ok(auctions);
+        var postedauctions = _auctionService.GetAllAuctions()
+            .Where(a => string.Equals(a.Status, "posted", StringComparison.OrdinalIgnoreCase)).ToList();
+        return Ok(postedauctions);
     }
 
     [HttpPost("auctions/bid/")]
@@ -57,4 +58,23 @@ public class BuyerController : ControllerBase
         return (result);
     }
 
+    // New public endpoint for posted products (assuming Product has Status property)
+    [AllowAnonymous]
+    [HttpGet("products")]
+    public IActionResult Products_GetPostedProducts()
+    {
+        var postedProducts = _productService.GetAllProducts()
+            .Where(p => string.Equals(p.Status, "posted", StringComparison.OrdinalIgnoreCase))
+            .Select(p => new
+            {
+                id = p.Id,
+                title = p.Name, // Map to 'title' to match frontend usage
+                price = p.Price,
+                image = p.Images, // Use directly as src, assuming "/AuctionApi/..." path
+                category = "General" // Default category since no column in DB
+            })
+            .ToList();
+
+        return Ok(postedProducts);
+    }
 }
