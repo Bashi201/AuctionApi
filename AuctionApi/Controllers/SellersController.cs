@@ -1,4 +1,5 @@
-﻿using AuctionApi.Models.Auctions;
+﻿using AuctionApi.Helpers;
+using AuctionApi.Models.Auctions;
 using AuctionApi.Models.Orders;
 using AuctionApi.Models.Products;
 using AuctionApi.Models.Users;
@@ -78,6 +79,21 @@ public class SellersController : ControllerBase
         var sellerId = int.Parse(User.FindFirst("id")?.Value);
         _auctionService.ExtendAuctionTime(id, sellerId, model.AdditionalHours);
         return Ok(new { message = "Auction time extended successfully" });
+    }
+
+    [HttpPut("auctions/{id}")]
+    public IActionResult UpdateAuction(int id, [FromForm] UpdateAuctionRequest model)
+    {
+        try
+        {
+            var sellerId = int.Parse(User.FindFirst("id")?.Value);
+            _auctionService.UpdateAuction(id, model, sellerId, _environment.WebRootPath);
+            return Ok(new { message = "Auction updated successfully" });
+        }
+        catch (AppException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     // Auction Management: Stop auction

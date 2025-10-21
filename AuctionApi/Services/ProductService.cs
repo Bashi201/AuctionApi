@@ -11,18 +11,11 @@ public interface IProductService
     void CreateProduct(CreateProductRequest model, int sellerId, string rootPath);
     IEnumerable<Product> GetSellerProducts(int sellerId);
     void DeleteProduct(int id, int sellerId);
-
-
-
-
-    IEnumerable<Product> GetAllProducts();
-
     void UpdateProduct(int id, UpdateProductRequest model, int sellerId, string rootPath);
-
-    
-    Product ApproveProduct(int productId);
-
-
+    IEnumerable<Product> GetAllProducts();
+    Product GetProductById(int id);
+    void UpdateProductAdmin(int id, UpdateProductRequest model, string rootPath);
+    void DeleteProductAdmin(int id);
 }
 
 public class ProductService : IProductService
@@ -61,6 +54,7 @@ public class ProductService : IProductService
 
     public IEnumerable<Product> GetSellerProducts(int sellerId)
     {
+        // Ensure this always returns a value - no conditional logic that skips return
         return _context.Products
             .Include(p => p.Seller)
             .Where(p => p.SellerId == sellerId)
@@ -109,6 +103,59 @@ public class ProductService : IProductService
         _context.SaveChanges();
     }
 
+    public IEnumerable<Product> GetAllProducts()
+    {
+        return _context.Products.Include(p => p.Seller).ToList();
+    }
+
+    public Product GetProductById(int id)
+    {
+        return _context.Products.Include(p => p.Seller).FirstOrDefault(p => p.Id == id);
+    }
+
+    public void DeleteProductAdmin(int id)
+    {
+        var product = GetProductById(id);
+        if (product == null) throw new AppException("Product not found");
+        _context.Products.Remove(product);
+        _context.SaveChanges();
+    }
+
+    public void UpdateProductAdmin(int id, UpdateProductRequest model, string rootPath)
+    {
+        var product = GetProductById(id);
+        if (product == null) throw new AppException("Product not found");
+
+        if (!string.IsNullOrEmpty(model.Name)) product.Name = model.Name;
+        if (!string.IsNullOrEmpty(model.Description)) product.Description = model.Description;
+        if (model.Price.HasValue) product.Price = model.Price.Value;
+        if (!string.IsNullOrEmpty(model.Status)) product.Status = model.Status;
+
+        var newImages = new List<IFormFile> { model.Image1, model.Image2, model.Image3, model.Image4 };
+        if (newImages.Any(img => img != null))
+        {
+            product.Images.Clear();
+            foreach (var image in newImages)
+            {
+                if (image != null)
+                {
+                    var uniqueFileName = GetUniqueFileName(image.FileName);
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "AuctionApi", "Images", "products");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        image.CopyTo(stream);
+                    }
+                    product.Images.Add("/AuctionApi/Images/products/" + uniqueFileName);
+                }
+            }
+        }
+
+        _context.Products.Update(product);
+        _context.SaveChanges();
+    }
+
     private string GetUniqueFileName(string fileName)
     {
         fileName = Path.GetFileName(fileName);
@@ -116,36 +163,4 @@ public class ProductService : IProductService
             + "_" + Guid.NewGuid().ToString()[..4]
             + Path.GetExtension(fileName);
     }
-
-
-    //get all
-
-
-
-    public IEnumerable<Product> GetAllProducts()
-    {
-        return _context.Products
-    //.Include(p => p.user) // include seller info too
-    .ToList();
-
-
-
-    }
-
-
-    //aprove produts
-
-    public Product ApproveProduct(int productId)
-    {
-        var product = _context.Products.FirstOrDefault(p => p.Id == productId);
-
-        if (product == null)
-            throw new Exception("Product not found");
-
-        product.Status = "Posted";   // Change Pending → Approved
-        _context.SaveChanges();
-
-        return product;
-    }
-
 }
