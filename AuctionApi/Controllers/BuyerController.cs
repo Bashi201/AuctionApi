@@ -77,4 +77,22 @@ public class BuyerController : ControllerBase
 
         return Ok(postedProducts);
     }
+
+    [HttpGet("product{id}")]
+    [AllowAnonymous]
+    public IActionResult Products_GetById(int id)
+    {
+        var product = _productService.GetProductById(id);
+        if (product == null) return NotFound(new { message = "Product not found" });
+        return Ok(product);
+    }
+
+    [HttpGet("auction{id}")]
+    [AllowAnonymous]
+    public IActionResult Auctions_GetById(int id)
+    {
+        var auction = _auctionService.GetAuctionByIdAdmin(id);
+        if (auction == null) return NotFound(new { message = "auction not found" });
+        return Ok(auction);
+    }
 }
