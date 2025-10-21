@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace AuctionApi.Models.Auctions;
 
@@ -13,4 +13,5 @@ public class UpdateAuctionRequest
     public IFormFile? Image3 { get; set; }
     public IFormFile? Image4 { get; set; }
     public DateTime StartTime { get; internal set; }
+    public string? Status { get; set; } // e.g., "Active", "Stopped", "Completed"
 }
