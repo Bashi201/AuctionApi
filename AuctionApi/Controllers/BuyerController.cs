@@ -39,7 +39,7 @@ public class BuyerController : ControllerBase
         _environment = environment;
     }
 
-    // Order Management: View all orders placed by buyers for the seller's products
+    
     [AllowAnonymous]
     [HttpGet("auctions/")]
     public IActionResult GetAllAtuctions()
@@ -68,10 +68,10 @@ public class BuyerController : ControllerBase
             .Select(p => new
             {
                 id = p.Id,
-                title = p.Name, // Map to 'title' to match frontend usage
+                title = p.Name,
                 price = p.Price,
-                image = p.Images, // Use directly as src, assuming "/AuctionApi/..." path
-                category = "General" // Default category since no column in DB
+                image = p.Images, 
+                category = "General" 
             })
             .ToList();
 
