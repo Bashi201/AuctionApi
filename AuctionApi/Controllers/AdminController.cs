@@ -31,14 +31,7 @@ public class AdminController : ControllerBase
         return Ok(products);
     }
 
-    [HttpGet("product{id}")]
-    [AllowAnonymous]
-    public IActionResult Products_GetById(int id)
-    {
-        var product = _productService.GetProductById(id);
-        if (product == null) return NotFound(new { message = "Product not found" });
-        return Ok(product);
-    }
+
 
     [HttpPut("product{id}")]
     public IActionResult Products_Update(int id, [FromForm] UpdateProductRequest model)
@@ -63,14 +56,7 @@ public class AdminController : ControllerBase
         return Ok(auctions);
     }
 
-    [HttpGet("auction{id}")]
-    [AllowAnonymous]
-    public IActionResult Auctions_GetById(int id)
-    {
-        var auction = _auctionService.GetAuctionByIdAdmin(id);
-        if (auction == null) return NotFound(new { message = "auction not found" });
-        return Ok(auction);
-    }
+
 
     [HttpPut("auction{id}")]
     public IActionResult Auctions_Update(int id, [FromForm] UpdateAuctionRequest model)
